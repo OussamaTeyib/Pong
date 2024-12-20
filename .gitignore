@@ -1,0 +1,10 @@
+# Build outputs
+[Bb]uild/
+[Rr]elease/
+[Dd]ebug/
+*.o
+*.exe
+*.out
+*.a
+*.so
+*.dll
