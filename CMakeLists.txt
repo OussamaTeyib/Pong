@@ -14,5 +14,13 @@ set(EXE_NAME main)
 # Compile source files into an executable
 add_executable(${EXE_NAME} ${SOURCES})
 
-# Link against essential libraries for Windows development
-target_link_libraries(${EXE_NAME} PRIVATE raylib gdi32 winmm)
+# Specify the C standard to be used
+set_property(TARGET ${EXE_NAME} PROPERTY C_STANDARD 17)
+
+# Link the raylib library to the executable
+target_link_libraries(${EXE_NAME} PRIVATE raylib)
+
+# Additional Windows-specific dependencies for raylib
+if(WIN32)
+    target_link_libraries(${EXE_NAME} PRIVATE gdi32 winmm)
+endif()
