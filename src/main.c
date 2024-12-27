@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <stdlib.h>
 
 const int screenWidth = 800;
 const int screenHeight = 600;
@@ -75,6 +76,8 @@ void UpdateDrawFrame(void) {
  
     // End the drawing process
     EndDrawing();
+
+    // free(text);
 }
 
 void MovePaddle(int id, int direction) {
@@ -88,8 +91,14 @@ void MoveBall(void) {
     ball.x += ball.velocity * ball.x_direction;
     ball.y += ball.velocity * ball.y_direction;
 
-    if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, paddles[0])) {
+    if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, paddles[0])) {
         ball.x_direction *= -1;
+        if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, (Rectangle) {paddles[0].x, paddles[0].y, paddles[0].width, paddles[0].height / 4}))
+            ball.velocity++;
+        else if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, (Rectangle) {paddles[0].x, paddles[0].y + paddles[0].height - paddles[0].height / 4, paddles[0].width, paddles[0].height / 4}))
+            ball.velocity++;
+        else
+            ball.velocity--;
     }
     else if ((ball.x - ball.radius) <= 0) {
         ball.x = screenWidth - 11;
@@ -101,6 +110,12 @@ void MoveBall(void) {
 
     if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, paddles[1])) {
         ball.x_direction *= -1;
+        if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, (Rectangle) {paddles[1].x, paddles[1].y, paddles[1].width, paddles[1].height / 4}))
+            ball.velocity++;
+        else if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, (Rectangle) {paddles[1].x, paddles[1].y + paddles[1].height - paddles[1].height / 4, paddles[1].width, paddles[1].height / 4}))
+            ball.velocity++;
+        else
+            ball.velocity--;
     }
     else if ((ball.x + ball.radius) >= screenWidth) {
         score[0]++;
