@@ -10,8 +10,8 @@ typedef struct {
     int x_direction, y_direction;
 } Ball;
 
+int score[2] = {0};
 Rectangle paddles[2];
-
 Ball ball;
 
 void UpdateDrawFrame(void);
@@ -21,10 +21,10 @@ void MoveBall(void);
 int main(void) {
     InitWindow(screenWidth, screenHeight, "Pong");
 
-    ball = (Ball) {screenWidth / 2, screenHeight / 2, 10.0f, 5.0f, 1, 1};
+    ball = (Ball) {screenWidth / 2, screenHeight / 2, 10.0f, 6.0f, 1, 1};
 
-    paddles[0] = (Rectangle) {0.0f, (screenHeight - screenHeight / 8) / 2, 10.0f, screenHeight / 8};
-    paddles[1] = (Rectangle) {screenWidth - 10.0f, (screenHeight - screenHeight / 8) / 2, 10.0f, screenHeight / 8};
+    paddles[0] = (Rectangle) {0.0f, (screenHeight - screenHeight / 6) / 2, 10.0f, screenHeight / 6};
+    paddles[1] = (Rectangle) {screenWidth - 10.0f, (screenHeight - screenHeight / 6) / 2, 10.0f, screenHeight / 6};
 
     // Set target frame rate, 
     SetTargetFPS(60);
@@ -65,6 +65,14 @@ void UpdateDrawFrame(void) {
     for (int i = 0; i < 2; i++)
         DrawRectangle(paddles[i].x, paddles[i].y, paddles[i].width, paddles[i].height, GREEN);
 
+    // Show the score
+    const char *text = TextFormat("%d %d", score[0], score[1]);
+    int width = MeasureText(text, 30);
+    DrawText(text, (screenWidth - width) / 2, 0.0f, 30, GREEN);
+
+    // Draw hafline
+    DrawLine(screenWidth / 2, 0.0f, screenWidth / 2, screenHeight, GREEN);
+ 
     // End the drawing process
     EndDrawing();
 }
@@ -80,8 +88,28 @@ void MoveBall(void) {
     ball.x += ball.velocity * ball.x_direction;
     ball.y += ball.velocity * ball.y_direction;
 
-    if ((ball.x + ball.radius) >= screenWidth || (ball.x - ball.radius) <= 0)
+    if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, paddles[0])) {
         ball.x_direction *= -1;
+    }
+    else if ((ball.x - ball.radius) <= 0) {
+        ball.x = screenWidth - 11;
+        ball.y = screenHeight / 2;
+        ball.x_direction = -1;
+        ball.y_direction = 1;
+        score[1]++;
+    }
+
+    if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, paddles[1])) {
+        ball.x_direction *= -1;
+    }
+    else if ((ball.x + ball.radius) >= screenWidth) {
+        score[0]++;
+        ball.x = 10 + 6;
+        ball.y = screenHeight / 2;
+        ball.x_direction = 1;
+        ball.y_direction = 1;
+    }
+
     if ((ball.y + ball.radius) >= screenHeight || (ball.y - ball.radius) <= 0)
         ball.y_direction *= -1;
 }
