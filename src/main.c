@@ -14,6 +14,7 @@ Rectangle paddles[2];
 Ball ball;
 
 void UpdateDrawFrame(void);
+void MovePaddle(int id, int direction);
 
 int main(void) {
     InitWindow(screenWidth, screenHeight, "Pong");
@@ -37,19 +38,36 @@ int main(void) {
 }
 
 void UpdateDrawFrame(void) {
-        // Begin the drawing process
-        BeginDrawing();
+    // Update
+    if (IsKeyDown(KEY_S))
+        MovePaddle(0, -1);
+    if (IsKeyDown(KEY_Z))
+        MovePaddle(0, 1);
+    if (IsKeyDown(KEY_UP))
+        MovePaddle(1, -1);
+    if (IsKeyDown(KEY_DOWN))
+        MovePaddle(1, 1);
 
-        // Clear the background with white
-        ClearBackground(WHITE);
+    // Begin the drawing process
+    BeginDrawing();
 
-        // Draw the ball
-        DrawCircle(ball.x, ball.y, ball.radius, GREEN);
+    // Clear the background with white
+    ClearBackground(WHITE);
 
-        // Draw the paddles
-        for (int i = 0; i < 2; i++)
-            DrawRectangle(paddles[i].x, paddles[i].y, paddles[i].width, paddles[i].height, GREEN);
+    // Draw the ball
+    DrawCircle(ball.x, ball.y, ball.radius, GREEN);
 
-        // End the drawing process
-        EndDrawing();
+    // Draw the paddles
+    for (int i = 0; i < 2; i++)
+        DrawRectangle(paddles[i].x, paddles[i].y, paddles[i].width, paddles[i].height, GREEN);
+
+    // End the drawing process
+    EndDrawing();
+}
+
+void MovePaddle(int id, int direction) {
+    paddles[id].y += 10.0f * direction;
+
+    if (paddles[id].y < 0) paddles[id].y = 0;
+    if (paddles[id].y > (screenHeight - paddles[id].height)) paddles[id].y = screenHeight - paddles[id].height;
 }
