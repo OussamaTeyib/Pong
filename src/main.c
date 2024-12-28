@@ -1,31 +1,60 @@
 #include <raylib.h>
 #include <stdlib.h>
 
-const int screenWidth = 800;
-const int screenHeight = 600;
-
 typedef struct {
     float x, y;
     float radius;
-    int velocity;
-    int x_direction, y_direction;
+    float x_velocity, y_velocity;
+    Color color;
 } Ball;
 
-int score[2] = {0};
-Rectangle paddles[2];
-Ball ball;
+typedef struct {
+    float x, y;
+    float width, height;
+    float velocity;
+    Color color;
+} Paddle;
+
+typedef struct {
+    int p1, p2;
+    int size;
+    Color color;
+} Score;
+
+typedef struct {
+    Vector2 screen;
+    Color bgColor;
+    Color halflineColor;
+    Ball ball;
+    Paddle paddles[2];
+    Score score;
+} Game;
+
+Game game;
 
 void UpdateDrawFrame(void);
-void MovePaddle(int id, int direction);
+void DrawHalfline(void);
+void MovePaddles(void);
+void DrawPaddles(void);
 void MoveBall(void);
+void DrawBall(void);
+void DrawScore(void);
 
 int main(void) {
-    InitWindow(screenWidth, screenHeight, "Pong");
+    game.screen = (Vector2) {800, 600};
 
-    ball = (Ball) {screenWidth / 2, screenHeight / 2, 10.0f, 6.0f, 1, 1};
+    InitWindow(game.screen.x, game.screen.y, "Pong");
 
-    paddles[0] = (Rectangle) {0.0f, (screenHeight - screenHeight / 6) / 2, 10.0f, screenHeight / 6};
-    paddles[1] = (Rectangle) {screenWidth - 10.0f, (screenHeight - screenHeight / 6) / 2, 10.0f, screenHeight / 6};
+    game.bgColor = WHITE;
+    game.halflineColor = GREEN;
+
+    game.ball = (Ball) {game.screen.x / 2, GetRandomValue(10.0f, game.screen.y - 10.0f), 10.0f, 5.0f * (!(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1), 5.0f * (!(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1), GREEN};
+
+    game.paddles[0] = (Paddle) {0.0f, (game.screen.y - game.screen.y / 6) / 2, 10.0f, game.screen.y / 6, 10.0f, GREEN};
+    game.paddles[1] = (Paddle) {game.screen.x - 10.0f, (game.screen.y - game.screen.y / 6) / 2, 10.0f, game.screen.y / 6, 10.0f, GREEN};
+
+    game.score = (Score) {0, 0, 30, GREEN};
+
 
     // Set target frame rate, 
     SetTargetFPS(60);
@@ -42,15 +71,7 @@ int main(void) {
 
 void UpdateDrawFrame(void) {
     // Update
-    if (IsKeyDown(KEY_S))
-        MovePaddle(0, -1);
-    if (IsKeyDown(KEY_Z ))
-        MovePaddle(0, 1);
-    if (IsKeyDown(KEY_UP))
-        MovePaddle(1, -1);
-    if (IsKeyDown(KEY_DOWN))
-        MovePaddle(1, 1);
-
+    MovePaddles();
     MoveBall();
 
     // Begin the drawing process
@@ -59,72 +80,86 @@ void UpdateDrawFrame(void) {
     // Clear the background with white
     ClearBackground(WHITE);
 
-    // Draw the ball
-    DrawCircle(ball.x, ball.y, ball.radius, GREEN);
+    // Draw the hafline
+    DrawHalfline();
 
     // Draw the paddles
-    for (int i = 0; i < 2; i++)
-        DrawRectangle(paddles[i].x, paddles[i].y, paddles[i].width, paddles[i].height, GREEN);
+    DrawPaddles();
+
+    // Draw the ball
+    DrawBall();
 
     // Show the score
-    const char *text = TextFormat("%d %d", score[0], score[1]);
-    int width = MeasureText(text, 30);
-    DrawText(text, (screenWidth - width) / 2, 0.0f, 30, GREEN);
-
-    // Draw hafline
-    DrawLine(screenWidth / 2, 0.0f, screenWidth / 2, screenHeight, GREEN);
+    DrawScore();
  
     // End the drawing process
     EndDrawing();
-
-    // free(text);
 }
 
-void MovePaddle(int id, int direction) {
-    paddles[id].y += 10.0f * direction;
+void DrawHalfline(void) {
+    DrawLine(game.screen.x / 2, 0.0f, game.screen.x / 2, game.screen.y, game.halflineColor);
+}
 
-    if (paddles[id].y < 0) paddles[id].y = 0;
-    if (paddles[id].y > (screenHeight - paddles[id].height)) paddles[id].y = screenHeight - paddles[id].height;
+void MovePaddles(void) {
+    if (IsKeyDown(KEY_S))
+        game.paddles[0].y -= game.paddles[0].velocity;
+    if (IsKeyDown(KEY_Z ))
+        game.paddles[0].y += game.paddles[0].velocity;
+
+    if (IsKeyDown(KEY_UP))
+        game.paddles[1].y -= game.paddles[1].velocity;
+    if (IsKeyDown(KEY_DOWN))
+        game.paddles[1].y += game.paddles[1].velocity;
+
+    for (int i = 0; i < 2; i++) {
+        if (game.paddles[i].y < 0) game.paddles[i].y = 0.0f;
+        if (game.paddles[i].y > (game.screen.y - game.paddles[i].height)) game.paddles[i].y = game.screen.y - game.paddles[i].height;
+    }
+}
+
+void DrawPaddles(void) {
+    for (int i = 0; i < 2; i++)
+        DrawRectangle(game.paddles[i].x, game.paddles[i].y, game.paddles[i].width, game.paddles[i].height, game.paddles[i].color);
 }
 
 void MoveBall(void) {
-    ball.x += ball.velocity * ball.x_direction;
-    ball.y += ball.velocity * ball.y_direction;
+    game.ball.x += game.ball.x_velocity;
+    game.ball.y += game.ball.y_velocity;
 
-    if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, paddles[0])) {
-        ball.x_direction *= -1;
-        if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, (Rectangle) {paddles[0].x, paddles[0].y, paddles[0].width, paddles[0].height / 4}))
-            ball.velocity++;
-        else if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, (Rectangle) {paddles[0].x, paddles[0].y + paddles[0].height - paddles[0].height / 4, paddles[0].width, paddles[0].height / 4}))
-            ball.velocity++;
-        else
-            ball.velocity--;
-    }
-    else if ((ball.x - ball.radius) <= 0) {
-        ball.x = screenWidth - 11;
-        ball.y = screenHeight / 2;
-        ball.x_direction = -1;
-        ball.y_direction = 1;
-        score[1]++;
+    if (game.ball.x < game.ball.radius) game.ball.x = game.ball.radius;
+    if (game.ball.x > game.screen.x - game.ball.radius) game.ball.x = game.screen.x - game.ball.radius;
+
+    if (game.ball.y < game.ball.radius) game.ball.y = game.ball.radius;
+    if (game.ball.y > game.screen.y - game.ball.radius) game.ball.y = game.screen.y - game.ball.radius;
+
+    if ((game.ball.y + game.ball.radius) >= game.screen.y || (game.ball.y - game.ball.radius) <= 0.0f)
+        game.ball.y_velocity *= -1;
+
+    if (CheckCollisionCircleRec((Vector2) {game.ball.x, game.ball.y}, game.ball.radius, (Rectangle) {game.paddles[0].x, game.paddles[0].y, game.paddles[0].width, game.paddles[0].height}) || CheckCollisionCircleRec((Vector2) {game.ball.x, game.ball.y}, game.ball.radius, (Rectangle) {game.paddles[1].x, game.paddles[1].y, game.paddles[1].width, game.paddles[1].height})) {
+        game.ball.x_velocity *= -1;
     }
 
-    if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, paddles[1])) {
-        ball.x_direction *= -1;
-        if (CheckCollisionCircleRec((Vector2) {ball.x, ball.y}, ball.radius, (Rectangle) {paddles[1].x, paddles[1].y, paddles[1].width, paddles[1].height / 4}))
-            ball.velocity++;
-        else if (CheckCollisionCircleRec(((Vector2) {ball.x, ball.y}), ball.radius, (Rectangle) {paddles[1].x, paddles[1].y + paddles[1].height - paddles[1].height / 4, paddles[1].width, paddles[1].height / 4}))
-            ball.velocity++;
-        else
-            ball.velocity--;
-    }
-    else if ((ball.x + ball.radius) >= screenWidth) {
-        score[0]++;
-        ball.x = 10 + 6;
-        ball.y = screenHeight / 2;
-        ball.x_direction = 1;
-        ball.y_direction = 1;
+    if ((game.ball.x - game.ball.radius) <= 0.0f) {
+        game.score.p2++;
+        game.ball.x = game.screen.x / 2;
+        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.y_velocity *= !(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1;
     }
 
-    if ((ball.y + ball.radius) >= screenHeight || (ball.y - ball.radius) <= 0)
-        ball.y_direction *= -1;
+    if ((game.ball.x + game.ball.radius) >= game.screen.x) {
+        game.score.p1++;
+        game.ball.x = game.screen.x / 2;
+        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.y_velocity *= !(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1;
+    }
+}
+
+void DrawBall(void) {
+    DrawCircle(game.ball.x, game.ball.y, game.ball.radius, game.ball.color);
+}
+
+void DrawScore(void) {
+    const char *text = TextFormat("%d %d", game.score.p1, game.score.p2);
+    int width = MeasureText(text, game.score.size);
+    DrawText(text, (game.screen.x - width) / 2, 0.0f, game.score.size, game.score.color);
 }
