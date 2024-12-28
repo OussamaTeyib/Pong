@@ -1,5 +1,4 @@
 #include <raylib.h>
-#include <stdlib.h>
 
 typedef struct {
     float x, y;
@@ -48,13 +47,12 @@ int main(void) {
     game.bgColor = WHITE;
     game.halflineColor = GREEN;
 
-    game.ball = (Ball) {game.screen.x / 2, GetRandomValue(10.0f, game.screen.y - 10.0f), 10.0f, 5.0f * (!(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1), 5.0f * (!(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1), GREEN};
+    game.ball = (Ball) {.x = game.screen.x / 2, .y = GetRandomValue(10, game.screen.y - 10), .radius = 10.0f, .x_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1: -1), .y_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1: -1), .color = GREEN};
 
-    game.paddles[0] = (Paddle) {0.0f, (game.screen.y - game.screen.y / 6) / 2, 10.0f, game.screen.y / 6, 10.0f, GREEN};
-    game.paddles[1] = (Paddle) {game.screen.x - 10.0f, (game.screen.y - game.screen.y / 6) / 2, 10.0f, game.screen.y / 6, 10.0f, GREEN};
+    game.paddles[0] = (Paddle) {.x = 0.0f, .y = (game.screen.y - game.screen.y / 6) / 2, .width = 10.0f, .height = game.screen.y / 6, .velocity = 10.0f, .color = GREEN};
+    game.paddles[1] = (Paddle) {.x = game.screen.x - 10.0f, .y = (game.screen.y - game.screen.y / 6) / 2, .width = 10.0f, .height = game.screen.y / 6, .velocity = 10.0f, .color = GREEN};
 
-    game.score = (Score) {0, 0, 30, GREEN};
-
+    game.score = (Score) {.p1 = 0, .p2 = 0, .size = 30, .color = GREEN};
 
     // Set target frame rate, 
     SetTargetFPS(60);
@@ -97,13 +95,15 @@ void UpdateDrawFrame(void) {
 }
 
 void DrawHalfline(void) {
-    DrawLine(game.screen.x / 2, 0.0f, game.screen.x / 2, game.screen.y, game.halflineColor);
+    for (int i = 0; i <= game.screen.y; i += game.screen.y / 20) {
+        DrawLine(game.screen.x / 2, i, game.screen.x / 2, i + game.screen.y / 40, game.halflineColor);
+    }
 }
 
 void MovePaddles(void) {
-    if (IsKeyDown(KEY_S))
+    if (IsKeyDown(KEY_W))
         game.paddles[0].y -= game.paddles[0].velocity;
-    if (IsKeyDown(KEY_Z ))
+    if (IsKeyDown(KEY_S ))
         game.paddles[0].y += game.paddles[0].velocity;
 
     if (IsKeyDown(KEY_UP))
@@ -143,14 +143,14 @@ void MoveBall(void) {
         game.score.p2++;
         game.ball.x = game.screen.x / 2;
         game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
-        game.ball.y_velocity *= !(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1;
+        game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1: -1;
     }
 
     if ((game.ball.x + game.ball.radius) >= game.screen.x) {
         game.score.p1++;
         game.ball.x = game.screen.x / 2;
         game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
-        game.ball.y_velocity *= !(GetRandomValue(0.0f, 1024.0f) % 2)? 1: -1;
+        game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1: -1;
     }
 }
 
