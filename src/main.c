@@ -48,7 +48,7 @@ int main(void) {
     game.bgColor = WHITE;
     game.halflineColor = GREEN;
 
-    game.ball = (Ball) {.x = game.screen.x / 2.0f, .y = (float) GetRandomValue(10, game.screen.y - 10), .radius = 10.0f, .x_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .y_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .color = GREEN};
+    game.ball = (Ball) {.x = game.screen.x / 2.0f, .y = GetRandomValue(10, game.screen.y - 10), .radius = 10.0f, .x_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .y_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .color = GREEN};
 
     game.paddles[0] = (Paddle) {.x = 0.0f, .y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .width = 10.0f, .height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
     game.paddles[1] = (Paddle) {.x = game.screen.x - 10.0f, .y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .width = 10.0f, .height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
@@ -143,14 +143,14 @@ void MoveBall(void) {
     if ((game.ball.x - game.ball.radius) <= 0.0f) {
         game.score.p2++;
         game.ball.x = game.screen.x / 2.0f;
-        game.ball.y = (float) GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
         game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f ;
     }
 
     if ((game.ball.x + game.ball.radius) >= game.screen.x) {
         game.score.p1++;
         game.ball.x = game.screen.x / 2.0f;
-        game.ball.y = (float) GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
         game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
     }
 }
