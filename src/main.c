@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <stdlib.h>
 
 typedef struct {
     float x, y;
@@ -64,7 +65,7 @@ int main(void) {
 
     // Clean-up
     CloseWindow();
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void UpdateDrawFrame(void) {
