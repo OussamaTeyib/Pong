@@ -2,15 +2,14 @@
 #include <stdlib.h>
 
 typedef struct {
-    float x, y;
+    Vector2 pos;
     float radius;
-    float x_velocity, y_velocity;
+    Vector2 velocity;
     Color color;
 } Ball;
 
 typedef struct {
-    float x, y;
-    float width, height;
+    Rectangle rect;
     float velocity;
     Color color;
 } Paddle;
@@ -48,10 +47,10 @@ int main(void) {
     game.bgColor = WHITE;
     game.halflineColor = GREEN;
 
-    game.ball = (Ball) {.x = game.screen.x / 2.0f, .y = GetRandomValue(10, game.screen.y - 10), .radius = 10.0f, .x_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .y_velocity = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .color = GREEN};
+    game.ball = (Ball) {.pos.x = game.screen.x / 2.0f, .pos.y = GetRandomValue(10, game.screen.y - 10), .radius = 10.0f, .velocity.x = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .velocity.y = 5.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), .color = GREEN};
 
-    game.paddles[0] = (Paddle) {.x = 0.0f, .y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .width = 10.0f, .height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
-    game.paddles[1] = (Paddle) {.x = game.screen.x - 10.0f, .y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .width = 10.0f, .height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
+    game.paddles[0] = (Paddle) {.rect.x = 0.0f, .rect.y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .rect.width = 10.0f, .rect.height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
+    game.paddles[1] = (Paddle) {.rect.x = game.screen.x - 10.0f, .rect.y = (game.screen.y - game.screen.y / 6.0f) / 2.0f, .rect.width = 10.0f, .rect.height = game.screen.y / 6.0f, .velocity = 10.0f, .color = GREEN};
 
     game.score = (Score) {.p1 = 0, .p2 = 0, .size = 30, .color = GREEN};
 
@@ -103,60 +102,60 @@ void DrawHalfline(void) {
 
 void MovePaddles(void) {
     if (IsKeyDown(KEY_W))
-        game.paddles[0].y -= game.paddles[0].velocity;
+        game.paddles[0].rect.y -= game.paddles[0].velocity;
     if (IsKeyDown(KEY_S ))
-        game.paddles[0].y += game.paddles[0].velocity;
+        game.paddles[0].rect.y += game.paddles[0].velocity;
 
     if (IsKeyDown(KEY_UP))
-        game.paddles[1].y -= game.paddles[1].velocity;
+        game.paddles[1].rect.y -= game.paddles[1].velocity;
     if (IsKeyDown(KEY_DOWN))
-        game.paddles[1].y += game.paddles[1].velocity;
+        game.paddles[1].rect.y += game.paddles[1].velocity;
 
     for (int i = 0; i < 2; i++) {
-        if (game.paddles[i].y < 0.0f) game.paddles[i].y = 0.0f;
-        if (game.paddles[i].y > (game.screen.y - game.paddles[i].height)) game.paddles[i].y = game.screen.y - game.paddles[i].height;
+        if (game.paddles[i].rect.y < 0.0f) game.paddles[i].rect.y = 0.0f;
+        if (game.paddles[i].rect.y > (game.screen.y - game.paddles[i].rect.height)) game.paddles[i].rect.y = game.screen.y - game.paddles[i].rect.height;
     }
 }
 
 void DrawPaddles(void) {
     for (int i = 0; i < 2; i++)
-        DrawRectangle(game.paddles[i].x, game.paddles[i].y, game.paddles[i].width, game.paddles[i].height, game.paddles[i].color);
+        DrawRectangleRec(game.paddles[i].rect, game.paddles[i].color);
 }
 
 void MoveBall(void) {
-    game.ball.x += game.ball.x_velocity;
-    game.ball.y += game.ball.y_velocity;
+    game.ball.pos.x += game.ball.velocity.x;
+    game.ball.pos.y += game.ball.velocity.y;
 
-    if (game.ball.x < game.ball.radius) game.ball.x = game.ball.radius;
-    if (game.ball.x > game.screen.x - game.ball.radius) game.ball.x = game.screen.x - game.ball.radius;
+    if (game.ball.pos.x < game.ball.radius) game.ball.pos.x = game.ball.radius;
+    if (game.ball.pos.x > game.screen.x - game.ball.radius) game.ball.pos.x = game.screen.x - game.ball.radius;
 
-    if (game.ball.y < game.ball.radius) game.ball.y = game.ball.radius;
-    if (game.ball.y > game.screen.y - game.ball.radius) game.ball.y = game.screen.y - game.ball.radius;
+    if (game.ball.pos.y < game.ball.radius) game.ball.pos.y = game.ball.radius;
+    if (game.ball.pos.y > game.screen.y - game.ball.radius) game.ball.pos.y = game.screen.y - game.ball.radius;
 
-    if ((game.ball.y + game.ball.radius) >= game.screen.y || (game.ball.y - game.ball.radius) <= 0.0f)
-        game.ball.y_velocity *= -1.0f;
+    if ((game.ball.pos.y + game.ball.radius) >= game.screen.y || (game.ball.pos.y - game.ball.radius) <= 0.0f)
+        game.ball.velocity.y *= -1.0f;
 
-    if (CheckCollisionCircleRec((Vector2) {game.ball.x, game.ball.y}, game.ball.radius, (Rectangle) {game.paddles[0].x, game.paddles[0].y, game.paddles[0].width, game.paddles[0].height}) || CheckCollisionCircleRec((Vector2) {game.ball.x, game.ball.y}, game.ball.radius, (Rectangle) {game.paddles[1].x, game.paddles[1].y, game.paddles[1].width, game.paddles[1].height})) {
-        game.ball.x_velocity *= -1.0f;
+    if (CheckCollisionCircleRec(game.ball.pos, game.ball.radius, game.paddles[0].rect) || CheckCollisionCircleRec(game.ball.pos, game.ball.radius, game.paddles[1].rect)) {
+        game.ball.velocity.x *= -1.0f;
     }
 
-    if ((game.ball.x - game.ball.radius) <= 0.0f) {
+    if ((game.ball.pos.x - game.ball.radius) <= 0.0f) {
         game.score.p2++;
-        game.ball.x = game.screen.x / 2.0f;
-        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
-        game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f ;
+        game.ball.pos.x = game.screen.x / 2.0f;
+        game.ball.pos.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f ;
     }
 
-    if ((game.ball.x + game.ball.radius) >= game.screen.x) {
+    if ((game.ball.pos.x + game.ball.radius) >= game.screen.x) {
         game.score.p1++;
-        game.ball.x = game.screen.x / 2.0f;
-        game.ball.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
-        game.ball.y_velocity *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
+        game.ball.pos.x = game.screen.x / 2.0f;
+        game.ball.pos.y = GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius);
+        game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
     }
 }
 
 void DrawBall(void) {
-    DrawCircle(game.ball.x, game.ball.y, game.ball.radius, game.ball.color);
+    DrawCircleV(game.ball.pos, game.ball.radius, game.ball.color);
 }
 
 void DrawScore(void) {
