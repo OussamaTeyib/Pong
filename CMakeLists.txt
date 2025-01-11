@@ -17,10 +17,5 @@ add_executable(${EXE_NAME} ${SOURCES})
 # Specify the C standard to be used
 set_property(TARGET ${EXE_NAME} PROPERTY C_STANDARD 17)
 
-# Link the raylib library to the executable
-target_link_libraries(${EXE_NAME} PRIVATE raylib)
-
-# Additional Windows-specific dependencies for raylib
-if(WIN32)
-    target_link_libraries(${EXE_NAME} PRIVATE gdi32 winmm)
-endif()
+# Link the necessary library to the executable
+target_link_libraries(${EXE_NAME} PRIVATE box2D raylib gdi32 winmm)
