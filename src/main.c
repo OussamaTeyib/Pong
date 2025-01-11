@@ -24,6 +24,7 @@ typedef struct {
 
 Game game;
 
+// prototypes
 void InitGame(void);
 void CreateBoundary(void);
 void CreateBall(void);
@@ -38,11 +39,12 @@ int main(void) {
     // Create the window
     InitWindow(game.screen.x, game.screen.y, "Pong");
 
-    // Set target frame rate, 
+    // Set the frame rate, 
     SetTargetFPS(60);
 
     // Main game loop
     while (!WindowShouldClose()) {
+        // Update physics and draw the frame
         UpdateDrawFrame();
     }
 
@@ -52,73 +54,77 @@ int main(void) {
     return EXIT_SUCCESS;
 }
 
+// Initialize game components
 void InitGame(void) {
-    // 
+    // Set screen size
     game.screen = (Vector2) {800.0f, 600.0f};
 
-    // Create Box2D world
+    // Create the Box2D world
     b2WorldDef worldDef = b2DefaultWorldDef();
-    worldDef.gravity.y = 0.0f; // No gravity
+    worldDef.gravity.y = 0.0f; // No gravity needed
     game.worldId = b2CreateWorld(&worldDef);
 
-    //
+    // Seed the random number generator
     SetRandomSeed(time(NULL));
 
-    // Create the boundary
+    // Create the boundary walls and the ball
     CreateBoundary();
-    // Create the ball
     CreateBall();
 }
 
+// Create the boundary around the screen
 void CreateBoundary()
 {
-    // Create the body
+    // Create a static body for the boundary
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = (b2Vec2) {0.0f, 0.0f};
     game.boundary.id = b2CreateBody(game.worldId, &bodyDef);
 
-    // Create the shapes
+    // Create shapes for the boundary
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    // Top
+    // Top boundary
     b2Segment segment = {(b2Vec2) {0, 0}, (b2Vec2) {game.screen.x, 0}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Bottom
+    // Bottom boundary
     segment = (b2Segment) {(b2Vec2) {0, game.screen.y}, (b2Vec2) {game.screen.x, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Left
+    // Left boundary
     segment = (b2Segment) {(b2Vec2) {0, 0}, (b2Vec2) {0, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Right
+    // Right boundary
     segment = (b2Segment) {(b2Vec2) {game.screen.x, 0}, (b2Vec2) {game.screen.x, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
 }
 
+// Create the ball
 void CreateBall()
 {
-    // ball's intial position, radius, velocity and color
+    // Set the ball's initial position, radius, initial velocity and color
     game.ball.pos = (b2Vec2) {game.screen.x / 2.0f, GetRandomValue(10, game.screen.y - 10)};
     game.ball.radius = 10.0f;
     game.ball.velocity = (b2Vec2) {50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), 50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f)};
     game.ball.color = GREEN;
 
-    // Create the body
+    // Create a dynamic body for the ball
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = game.ball.pos;
     bodyDef.type = b2_dynamicBody;
     game.ball.id = b2CreateBody(game.worldId, &bodyDef);
     b2Body_SetLinearVelocity(game.ball.id, game.ball.velocity);
 
-    // Create the shape
+    // Create a circular shape for the ball
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.restitution = 1.0f;
-    shapeDef.friction = 0.0f;
+    shapeDef.restitution = 1.0f; // Perfectly elastic collition
+    shapeDef.friction = 0.0f; // No friction needed
     b2Circle circle = {(b2Vec2) {0.0f, 0.0f}, game.ball.radius};
     b2CreateCircleShape(game.ball.id, &shapeDef, &circle);
 }
 
+// Main update and render function
 void UpdateDrawFrame(void) {
-    // Update
+    // Update the physics world
     b2World_Step(game.worldId, GetFrameTime(), 8);
+    // Update the ball's data
     UpdateBall();
 
     // Begin the drawing process
@@ -127,9 +133,6 @@ void UpdateDrawFrame(void) {
     // Clear the background with white
     ClearBackground(WHITE);
 
-    DrawLine(0, game.screen.y / 2.0f, game.screen.x, game.screen.y / 2.0f, RED);
-    DrawLine(game.screen.x / 2.0f, 0, game.screen.x / 2.0f, game.screen.y, RED);
-
     // Draw the ball
     DrawBall();
 
@@ -137,11 +140,13 @@ void UpdateDrawFrame(void) {
     EndDrawing();
 }
 
+// Update the ball's position and velocity
 void UpdateBall(void) {
     game.ball.pos = b2Body_GetPosition(game.ball.id);
     game.ball.velocity = b2Body_GetLinearVelocity(game.ball.id);
 }
 
+// Draw the ball on the screen
 void DrawBall(void) {
     DrawCircle(game.ball.pos.x, game.ball.pos.y, game.ball.radius, game.ball.color);
 }
