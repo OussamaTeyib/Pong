@@ -1,10 +1,23 @@
-# Build outputs
-[Bb]uild/
-[Rr]elease/
-[Dd]ebug/
+# Build directories
+[Bb]uild*/
+[Rr]elease*/
+[Dd]ebug*/
+
+# Compiled object files
 *.o
+*.obj
+
+# Executable files
 *.exe
 *.out
+*.elf
+*.app
+
+# Static libraries
 *.a
+*.lib
+
+# Shared libraries
 *.so
 *.dll
+*.dylib
