@@ -50,6 +50,7 @@ int main(void) {
 
     // Clean-up
     b2DestroyWorld(game.worldId);
+    myWorldId = b2_nullWorldId;
     CloseWindow();
     return EXIT_SUCCESS;
 }
