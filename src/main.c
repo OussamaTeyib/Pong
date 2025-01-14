@@ -123,7 +123,7 @@ void CreateBall()
 // Main update and render function
 void UpdateDrawFrame(void) {
     // Update the physics world
-    b2World_Step(game.worldId, GetFrameTime(), 8);
+    b2World_Step(game.worldId, GetFrameTime(), 4);
     // Update the ball's data
     UpdateBall();
 
