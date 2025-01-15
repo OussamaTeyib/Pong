@@ -179,7 +179,7 @@ void UpdateGame(void) {
         if (B2_ID_EQUALS(data->shapeIdA, game.boundary.leftShapeId)) {
             // Reset the ball's position to the screen center with a random vertical offset
             game.ball.pos = (b2Vec2) {game.screen.x / 2.0f,
-                                     GetRandomValue(10, game.screen.y - 10)};
+                                     GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius)};
 
             // Ensure the ball keep moving towards the left
             game.ball.velocity.x *= game.ball.velocity.x > 0.0f? -1.0f: 1.0f;
@@ -194,7 +194,7 @@ void UpdateGame(void) {
         if (B2_ID_EQUALS(data->shapeIdA, game.boundary.rightShapeId)) {
             // Reset the ball's position to the screen center with a random vertical offset
             game.ball.pos = (b2Vec2) {game.screen.x / 2.0f,
-                                     GetRandomValue(10, game.screen.y - 10)};
+                                     GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius)};
 
             // Ensure the ball keep moving towards the right
             game.ball.velocity.x *= game.ball.velocity.x > 0.0f? 1.0f: -1.0f;
