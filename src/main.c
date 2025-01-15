@@ -89,16 +89,16 @@ void CreateBoundary() {
     // Create shape definitions for the four boundary walls
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     // Top boundary wall
-    b2Segment segment = {(b2Vec2) {0, 0}, (b2Vec2) {game.screen.x, 0}};
+    b2Segment segment = {(b2Vec2) {0.0f, 0.0f}, (b2Vec2) {game.screen.x, 0.0f}};
     game.boundary.topShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Bottom boundary wall
-    segment = (b2Segment) {(b2Vec2) {0, game.screen.y}, (b2Vec2) {game.screen.x, game.screen.y}};
+    segment = (b2Segment) {(b2Vec2) {0.0f, game.screen.y}, (b2Vec2) {game.screen.x, game.screen.y}};
     game.boundary.bottomShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Left boundary wall
-    segment = (b2Segment) {(b2Vec2) {0, 0}, (b2Vec2) {0, game.screen.y}};
+    segment = (b2Segment) {(b2Vec2) {0.0f, 0.0f}, (b2Vec2) {0.0f, game.screen.y}};
     game.boundary.leftShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Right boundary wall
-    segment = (b2Segment) {(b2Vec2) {game.screen.x, 0}, (b2Vec2) {game.screen.x, game.screen.y}};
+    segment = (b2Segment) {(b2Vec2) {game.screen.x, 0.0f}, (b2Vec2) {game.screen.x, game.screen.y}};
     game.boundary.rightShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
 }
 
@@ -162,6 +162,48 @@ void UpdateGame(void) {
         if (B2_ID_EQUALS(event->bodyId, game.ball.bodyId)) {
             game.ball.pos = event->transform.p;
             game.ball.velocity = b2Body_GetLinearVelocity(event->bodyId);
+        }
+    }
+
+    // Retrieve the maximum number of contacts the ball can have
+    int ballContactCapacity = b2Shape_GetContactCapacity(game.ball.shapeId);
+    // Retrieve the current contact data for the ball
+    b2ContactData ballContactData[ballContactCapacity];
+    int ballContactCount = b2Shape_GetContactData(game.ball.shapeId, ballContactData, ballContactCapacity);
+
+    // Iterate through all contacts involving the ball
+    for (int i = 0; i < ballContactCount; i++) {
+        b2ContactData *data = ballContactData + i;
+
+        // If the ball collides with the left boundary
+        if (B2_ID_EQUALS(data->shapeIdA, game.boundary.leftShapeId)) {
+            // Reset the ball's position to the screen center with a random vertical offset
+            game.ball.pos = (b2Vec2) {game.screen.x / 2.0f,
+                                     GetRandomValue(10, game.screen.y - 10)};
+
+            // Ensure the ball keep moving towards the left
+            game.ball.velocity.x *= game.ball.velocity.x > 0.0f? -1.0f: 1.0f;
+            // Randomize the ball's vertical velocity direction
+            game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
+
+            // Apply the new position and velocity to the physics world
+            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, (b2Rot) {0.0f});
+            b2Body_SetLinearVelocity(game.ball.bodyId, game.ball.velocity);
+        }
+        // If the ball collides with the right boundary
+        if (B2_ID_EQUALS(data->shapeIdA, game.boundary.rightShapeId)) {
+            // Reset the ball's position to the screen center with a random vertical offset
+            game.ball.pos = (b2Vec2) {game.screen.x / 2.0f,
+                                     GetRandomValue(10, game.screen.y - 10)};
+
+            // Ensure the ball keep moving towards the right
+            game.ball.velocity.x *= game.ball.velocity.x > 0.0f? 1.0f: -1.0f;
+            // Randomize the ball's vertical velocity direction
+            game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
+
+            // Apply the new position and velocity to the physics world
+            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, (b2Rot) {0.0f});
+            b2Body_SetLinearVelocity(game.ball.bodyId, game.ball.velocity);
         }
     }
 }
