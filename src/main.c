@@ -5,12 +5,14 @@
 
 // Structure to represent the boundary walls
 typedef struct {
-    b2BodyId id;
+    b2BodyId bodyId;
+    b2ShapeId topShapeId, bottomShapeId, leftShapeId, rightShapeId;
 } Boundary;
 
 // Structure to represent the ball
 typedef struct {
-    b2BodyId id;
+    b2BodyId bodyId;
+    b2ShapeId shapeId;
     b2Vec2 pos;
     float radius;
     b2Vec2 velocity;
@@ -82,22 +84,22 @@ void CreateBoundary() {
     // Create a static body for the boundary walls
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = (b2Vec2) {0.0f, 0.0f};
-    game.boundary.id = b2CreateBody(game.worldId, &bodyDef);
+    game.boundary.bodyId = b2CreateBody(game.worldId, &bodyDef);
 
     // Create shape definitions for the four boundary walls
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     // Top boundary wall
     b2Segment segment = {(b2Vec2) {0, 0}, (b2Vec2) {game.screen.x, 0}};
-    b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
+    game.boundary.topShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Bottom boundary wall
     segment = (b2Segment) {(b2Vec2) {0, game.screen.y}, (b2Vec2) {game.screen.x, game.screen.y}};
-    b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
+    game.boundary.bottomShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Left boundary wall
     segment = (b2Segment) {(b2Vec2) {0, 0}, (b2Vec2) {0, game.screen.y}};
-    b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
+    game.boundary.leftShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
     // Right boundary wall
     segment = (b2Segment) {(b2Vec2) {game.screen.x, 0}, (b2Vec2) {game.screen.x, game.screen.y}};
-    b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
+    game.boundary.rightShapeId = b2CreateSegmentShape(game.boundary.bodyId, &shapeDef, &segment);
 }
 
 // Create the ball
@@ -113,17 +115,17 @@ void CreateBall() {
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = game.ball.pos;
     bodyDef.type = b2_dynamicBody;
-    game.ball.id = b2CreateBody(game.worldId, &bodyDef);
+    game.ball.bodyId = b2CreateBody(game.worldId, &bodyDef);
 
     // Set the ball's velocity
-    b2Body_SetLinearVelocity(game.ball.id, game.ball.velocity);
+    b2Body_SetLinearVelocity(game.ball.bodyId, game.ball.velocity);
 
     // Create a circular shape for the ball
     b2ShapeDef shapeDef = b2DefaultShapeDef();
     shapeDef.restitution = 1.0f; // Perfectly elastic collition
     shapeDef.friction = 0.0f; // No friction needed
     b2Circle circle = {(b2Vec2) {0.0f, 0.0f}, game.ball.radius};
-    b2CreateCircleShape(game.ball.id, &shapeDef, &circle);
+    game.ball.shapeId = b2CreateCircleShape(game.ball.bodyId, &shapeDef, &circle);
 }
 
 // Main update and rendering function
@@ -157,9 +159,9 @@ void UpdateGame(void) {
         b2BodyMoveEvent *event = events.moveEvents + i;
 
         // If the ball moved, update its state
-        if (B2_ID_EQUALS(event->bodyId, game.ball.id)) {
+        if (B2_ID_EQUALS(event->bodyId, game.ball.bodyId)) {
             game.ball.pos = event->transform.p;
-            game.ball.velocity = b2Body_GetLinearVelocity(game.ball.id);
+            game.ball.velocity = b2Body_GetLinearVelocity(event->bodyId);
         }
     }
 }
