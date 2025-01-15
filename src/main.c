@@ -19,23 +19,37 @@ typedef struct {
     Color color;
 } Ball;
 
+// Structure to represent a paddle
+typedef struct {
+    b2BodyId bodyId;
+    b2ShapeId shapeId;
+    b2Vec2 pos;
+    b2Vec2 size;
+    float velocity;
+    Color color;
+} Paddle;
+
 // Structure to hold the game state
 typedef struct {
     Vector2 screen;
     b2WorldId worldId;
     Boundary boundary;
     Ball ball;
+    Paddle paddle_1, paddle_2;
 } Game;
 
+// Global game object
 Game game;
 
-// prototypes
+// Function prototypes
 void InitGame(void);
 void CreateBoundary(void);
 void CreateBall(void);
+void CreatePaddles(void);
 void UpdateDrawFrame(void);
 void UpdateGame(void);
 void DrawBall(void);
+void DrawPaddles(void);
 
 // Main entry point of the program
 int main(void) {
@@ -74,9 +88,10 @@ void InitGame(void) {
     // Seed the random number generator
     SetRandomSeed(time(NULL));
 
-    // Create boundary walls and the ball
+    // Create boundary walls, the ball, and the paddles
     CreateBoundary();
     CreateBall();
+    CreatePaddles();
 }
 
 // Create the boundary walls
@@ -105,10 +120,10 @@ void CreateBoundary() {
 // Create the ball
 void CreateBall() {
     // Set the ball's initial position, radius, velocity and color
-    game.ball.pos = (b2Vec2) {game.screen.x / 2.0f, GetRandomValue(10, game.screen.y - 10)};
-    game.ball.radius = 10.0f;
-    game.ball.velocity = (b2Vec2) {50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f),
-                                   50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f)};
+    game.ball.radius = 15.0f;
+    game.ball.pos = (b2Vec2) {game.screen.x / 2.0f, GetRandomValue(game.ball.radius, game.screen.y - game.ball.radius)};
+    game.ball.velocity = (b2Vec2) {80.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f),
+                                   80.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f)};
     game.ball.color = GREEN;
 
     // Create a dynamic body for the ball
@@ -128,6 +143,41 @@ void CreateBall() {
     game.ball.shapeId = b2CreateCircleShape(game.ball.bodyId, &shapeDef, &circle);
 }
 
+// Create the paddles
+void CreatePaddles(void) {
+    // Set the left paddle's initial position, size, velocity and color
+    game.paddle_1.size = (b2Vec2) {40.0f, game.screen.y / 5.0f};
+    game.paddle_1.pos = (b2Vec2) {game.paddle_1.size.x / 2.0f, game.screen.y / 2.0f};
+    game.paddle_1.velocity = 20.0f;
+    game.paddle_1.color = GREEN;
+
+    // Set the right paddle's initial position, size, velocity and color
+    game.paddle_2.size = (b2Vec2) {40.0f, game.screen.y / 5.0f};
+    game.paddle_2.pos = (b2Vec2) {game.screen.x - game.paddle_2.size.x / 2.0f, game.screen.y / 2.0f};
+    game.paddle_2.velocity = 20.0f;
+    game.paddle_2.color = GREEN;
+
+    // Create a static body for the left paddle
+    b2BodyDef bodyDef = b2DefaultBodyDef();
+    bodyDef.position = game.paddle_1.pos;
+    game.paddle_1.bodyId = b2CreateBody(game.worldId, &bodyDef);
+
+    // Create a static body for the right paddle
+    bodyDef.position = game.paddle_2.pos;
+    game.paddle_2.bodyId = b2CreateBody(game.worldId, &bodyDef);
+
+    // Create shape definitions for the paddles
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    
+    // Create a box shape for the left paddle
+    b2Polygon left = b2MakeBox(game.paddle_1.size.x / 2.0f, game.paddle_1.size.y / 2.0f);
+    game.paddle_1.shapeId = b2CreatePolygonShape(game.paddle_1.bodyId, &shapeDef, &left);
+
+    // Create a box shape for the right paddle
+    b2Polygon right = b2MakeBox(game.paddle_2.size.x / 2.0f, game.paddle_2.size.y / 2.0f);
+    game.paddle_2.shapeId = b2CreatePolygonShape(game.paddle_2.bodyId, &shapeDef, &right);
+}
+
 // Main update and rendering function
 void UpdateDrawFrame(void) {
     // Update the physics and game state
@@ -138,6 +188,9 @@ void UpdateDrawFrame(void) {
 
     // Clear the background
     ClearBackground(WHITE);
+
+    // Draw the paddles
+    DrawPaddles();
 
     // Draw the ball
     DrawBall();
@@ -211,4 +264,19 @@ void UpdateGame(void) {
 // Draw the ball on the screen
 void DrawBall(void) {
     DrawCircle(game.ball.pos.x, game.ball.pos.y, game.ball.radius, game.ball.color);
+}
+
+// Draw the paddles on the screen
+void DrawPaddles(void) {
+    // Get the top left corner of the left paddle
+    b2Vec2 p = b2Body_GetWorldPoint(game.paddle_1.bodyId, (b2Vec2) {-game.paddle_1.size.x / 2.0f, -game.paddle_1.size.y / 2.0f});
+
+    // Draw the left paddle
+    DrawRectangle(p.x, p.y, game.paddle_1.size.x, game.paddle_1.size.y, game.paddle_1.color);
+
+    // Get the top left corner of the right paddle
+    p = b2Body_GetWorldPoint(game.paddle_2.bodyId, (b2Vec2) {-game.paddle_2.size.x / 2.0f, -game.paddle_2.size.y / 2.0f});
+
+    // Draw the left paddle
+    DrawRectangle(p.x, p.y, game.paddle_2.size.x, game.paddle_2.size.y, game.paddle_2.color);
 }
