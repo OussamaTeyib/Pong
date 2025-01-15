@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+// Structure to represent the boundary walls
 typedef struct {
     b2BodyId id;
 } Boundary;
 
+// Structure to represent the ball
 typedef struct {
     b2BodyId id;
     b2Vec2 pos;
@@ -15,6 +17,7 @@ typedef struct {
     Color color;
 } Ball;
 
+// Structure to hold the game state
 typedef struct {
     Vector2 screen;
     b2WorldId worldId;
@@ -32,6 +35,7 @@ void UpdateDrawFrame(void);
 void UpdateGame(void);
 void DrawBall(void);
 
+// Main entry point of the program
 int main(void) {
     // Initialize the game
     InitGame();
@@ -55,9 +59,9 @@ int main(void) {
     return EXIT_SUCCESS;
 }
 
-// Initialize game components
+// Initialize the game components
 void InitGame(void) {
-    // Set screen size
+    // Set screen dimensions
     game.screen = (Vector2) {800.0f, 600.0f};
 
     // Create the Box2D world
@@ -68,40 +72,41 @@ void InitGame(void) {
     // Seed the random number generator
     SetRandomSeed(time(NULL));
 
-    // Create the boundary walls and the ball
+    // Create boundary walls and the ball
     CreateBoundary();
     CreateBall();
 }
 
-// Create the boundary around the screen
+// Create the boundary walls
 void CreateBoundary() {
-    // Create a static body for the boundary
+    // Create a static body for the boundary walls
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = (b2Vec2) {0.0f, 0.0f};
     game.boundary.id = b2CreateBody(game.worldId, &bodyDef);
 
-    // Create shapes for the boundary
+    // Create shape definitions for the four boundary walls
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    // Top boundary
+    // Top boundary wall
     b2Segment segment = {(b2Vec2) {0, 0}, (b2Vec2) {game.screen.x, 0}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Bottom boundary
+    // Bottom boundary wall
     segment = (b2Segment) {(b2Vec2) {0, game.screen.y}, (b2Vec2) {game.screen.x, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Left boundary
+    // Left boundary wall
     segment = (b2Segment) {(b2Vec2) {0, 0}, (b2Vec2) {0, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
-    // Right boundary
+    // Right boundary wall
     segment = (b2Segment) {(b2Vec2) {game.screen.x, 0}, (b2Vec2) {game.screen.x, game.screen.y}};
     b2CreateSegmentShape(game.boundary.id, &shapeDef, &segment);
 }
 
 // Create the ball
 void CreateBall() {
-    // Set the ball's initial position, radius, initial velocity and color
+    // Set the ball's initial position, radius, velocity and color
     game.ball.pos = (b2Vec2) {game.screen.x / 2.0f, GetRandomValue(10, game.screen.y - 10)};
     game.ball.radius = 10.0f;
-    game.ball.velocity = (b2Vec2) {50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f), 50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f)};
+    game.ball.velocity = (b2Vec2) {50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f),
+                                   50.0f * (!(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f)};
     game.ball.color = GREEN;
 
     // Create a dynamic body for the ball
@@ -109,6 +114,8 @@ void CreateBall() {
     bodyDef.position = game.ball.pos;
     bodyDef.type = b2_dynamicBody;
     game.ball.id = b2CreateBody(game.worldId, &bodyDef);
+
+    // Set the ball's velocity
     b2Body_SetLinearVelocity(game.ball.id, game.ball.velocity);
 
     // Create a circular shape for the ball
@@ -119,39 +126,38 @@ void CreateBall() {
     b2CreateCircleShape(game.ball.id, &shapeDef, &circle);
 }
 
-// Main update and render function
+// Main update and rendering function
 void UpdateDrawFrame(void) {
-    // Update the game state
+    // Update the physics and game state
     UpdateGame();
 
-    // Begin the drawing process
+    // Begin drawing
     BeginDrawing();
 
-    // Clear the background with white
+    // Clear the background
     ClearBackground(WHITE);
 
     // Draw the ball
     DrawBall();
 
-    // End the drawing process
+    // End drawing
     EndDrawing();
 }
 
-// Update the game state
+// Update the physics and game state
 void UpdateGame(void) {
-    // Advance the physics simulation by one step
+    // Step the physics simulation
     b2World_Step(game.worldId, GetFrameTime(), 4);
 
-    // Retrieve body movement events from the physics world
+    // Get movement events from the physics world
     b2BodyEvents events = b2World_GetBodyEvents(game.worldId);
 
-    // Iterate through all bodies that moved during this step 
+    // Iterate through all bodies that moved during the step 
     for (int i = 0; i < events.moveCount; i++) {
         b2BodyMoveEvent *event = events.moveEvents + i;
 
-        // Check if the moved body is the ball
+        // If the ball moved, update its state
         if (B2_ID_EQUALS(event->bodyId, game.ball.id)) {
-            // Update the ball's position and velocity
             game.ball.pos = event->transform.p;
             game.ball.velocity = b2Body_GetLinearVelocity(game.ball.id);
         }
