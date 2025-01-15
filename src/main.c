@@ -29,7 +29,7 @@ void InitGame(void);
 void CreateBoundary(void);
 void CreateBall(void);
 void UpdateDrawFrame(void);
-void UpdateBall(void);
+void UpdateGame(void);
 void DrawBall(void);
 
 int main(void) {
@@ -50,7 +50,7 @@ int main(void) {
 
     // Clean-up
     b2DestroyWorld(game.worldId);
-    myWorldId = b2_nullWorldId;
+    game.worldId = b2_nullWorldId;
     CloseWindow();
     return EXIT_SUCCESS;
 }
@@ -74,8 +74,7 @@ void InitGame(void) {
 }
 
 // Create the boundary around the screen
-void CreateBoundary()
-{
+void CreateBoundary() {
     // Create a static body for the boundary
     b2BodyDef bodyDef = b2DefaultBodyDef();
     bodyDef.position = (b2Vec2) {0.0f, 0.0f};
@@ -98,8 +97,7 @@ void CreateBoundary()
 }
 
 // Create the ball
-void CreateBall()
-{
+void CreateBall() {
     // Set the ball's initial position, radius, initial velocity and color
     game.ball.pos = (b2Vec2) {game.screen.x / 2.0f, GetRandomValue(10, game.screen.y - 10)};
     game.ball.radius = 10.0f;
@@ -123,10 +121,8 @@ void CreateBall()
 
 // Main update and render function
 void UpdateDrawFrame(void) {
-    // Update the physics world
-    b2World_Step(game.worldId, GetFrameTime(), 4);
-    // Update the ball's data
-    UpdateBall();
+    // Update the game state
+    UpdateGame();
 
     // Begin the drawing process
     BeginDrawing();
@@ -141,10 +137,25 @@ void UpdateDrawFrame(void) {
     EndDrawing();
 }
 
-// Update the ball's position and velocity
-void UpdateBall(void) {
-    game.ball.pos = b2Body_GetPosition(game.ball.id);
-    game.ball.velocity = b2Body_GetLinearVelocity(game.ball.id);
+// Update the game state
+void UpdateGame(void) {
+    // Advance the physics simulation by one step
+    b2World_Step(game.worldId, GetFrameTime(), 4);
+
+    // Retrieve body movement events from the physics world
+    b2BodyEvents events = b2World_GetBodyEvents(game.worldId);
+
+    // Iterate through all bodies that moved during this step 
+    for (int i = 0; i < events.moveCount; i++) {
+        b2BodyMoveEvent *event = events.moveEvents + i;
+
+        // Check if the moved body is the ball
+        if (B2_ID_EQUALS(event->bodyId, game.ball.id)) {
+            // Update the ball's position and velocity
+            game.ball.pos = event->transform.p;
+            game.ball.velocity = b2Body_GetLinearVelocity(game.ball.id);
+        }
+    }
 }
 
 // Draw the ball on the screen
