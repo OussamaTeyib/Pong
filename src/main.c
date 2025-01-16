@@ -240,7 +240,7 @@ void UpdateGame(void) {
             game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
 
             // Apply the new position and velocity to the physics world
-            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, (b2Rot) {0.0f});
+            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, b2MakeRot(0.0f));
             b2Body_SetLinearVelocity(game.ball.bodyId, game.ball.velocity);
         }
         // If the ball collides with the right boundary
@@ -255,9 +255,30 @@ void UpdateGame(void) {
             game.ball.velocity.y *= !(GetRandomValue(0, 1024) % 2)? 1.0f: -1.0f;
 
             // Apply the new position and velocity to the physics world
-            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, (b2Rot) {0.0f});
+            b2Body_SetTransform(game.ball.bodyId, game.ball.pos, b2MakeRot(0.0f));
             b2Body_SetLinearVelocity(game.ball.bodyId, game.ball.velocity);
         }
+    }
+
+    // Move the left paddle up and down
+    b2Vec2 newPos; 
+    if (IsKeyDown(KEY_W)) {
+        newPos = b2Body_GetWorldPoint(game.paddle_1.bodyId, (b2Vec2) {0.0f, -game.paddle_1.velocity});
+        b2Body_SetTransform(game.paddle_1.bodyId, newPos, b2MakeRot(0.0f));
+    }
+    if (IsKeyDown(KEY_S)) {
+        newPos = b2Body_GetWorldPoint(game.paddle_1.bodyId, (b2Vec2) {0.0f, game.paddle_1.velocity});
+        b2Body_SetTransform(game.paddle_1.bodyId, newPos, b2MakeRot(0.0f));
+    }
+
+    // Move the right paddle up and down
+    if (IsKeyDown(KEY_UP)) {
+        newPos = b2Body_GetWorldPoint(game.paddle_2.bodyId, (b2Vec2) {0.0f, -game.paddle_2.velocity});
+        b2Body_SetTransform(game.paddle_2.bodyId, newPos, b2MakeRot(0.0f));
+    }
+    if (IsKeyDown(KEY_DOWN)) {
+        newPos = b2Body_GetWorldPoint(game.paddle_2.bodyId, (b2Vec2) {0.0f, +game.paddle_2.velocity});
+        b2Body_SetTransform(game.paddle_2.bodyId, newPos, b2MakeRot(0.0f));
     }
 }
 
